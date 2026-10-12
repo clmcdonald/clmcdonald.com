@@ -1,7 +1,24 @@
 {
   "name": "Hearts",
   "short_name": "Hearts",
+  "description": "The classic card game — play against three AI opponents.",
+  "start_url": "/hearts",
+  "scope": "/hearts",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d5c2e",
+  "theme_color": "#0d5c2e",
   "icons": [
+    {
+      "src": "/favicons/hearts/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicons/hearts/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
     {
       "src": "/favicons/hearts/android-chrome-192x192.png",
       "sizes": "192x192",
@@ -12,8 +29,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "theme_color": "#0d5c2e",
-  "background_color": "#0d5c2e",
-  "display": "standalone"
+  ]
 }
