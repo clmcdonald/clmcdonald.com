@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { HeartsApp } from '../components/HeartsApp';
+import { CardBackView } from '../components/CardBackView';
 import { CardView } from '../components/CardView';
+import { OpponentSection } from '../components/OpponentSection';
 import { Table } from '../components/Table';
 import { TrickView } from '../components/TrickView';
 import { PlayerHand } from '../components/PlayerHand';
@@ -226,6 +228,43 @@ describe('render smoke tests', () => {
       <PlayerHand cards={state.hands[0]} legal={null} interactive={false} />
     );
     expect(markup).not.toContain('<button');
+  });
+
+  it('draws the opponent fan from the hand size, and caps how many backs it draws', () => {
+    const backClass = classAttributeOf(renderToStaticMarkup(<CardBackView />));
+    expect(backClass).not.toBe('');
+
+    const markupFor = (cardCount: number) =>
+      renderToStaticMarkup(
+        <OpponentSection
+          player={{ id: 1, name: 'West', isHuman: false, difficulty: 'normal' }}
+          cardCount={cardCount}
+          total={0}
+          isTurn={false}
+          isWinner={false}
+        />
+      );
+
+    // A fan wider than its seat is drawn off the edge of the screen — which is
+    // what happened to a phone, where five backs at a fixed lap overhung the
+    // seat column and the fifth was clipped. The lap is now worked out from the
+    // seat's own width, and no string render can check that: what this pins is
+    // the count of backs drawn, and that the cap is on the picture only. Whether
+    // the fan actually fits is a layout question, checked in a browser.
+    for (const [cardCount, backs] of [
+      [13, 5],
+      [6, 5],
+      [3, 3],
+      [1, 1],
+      [0, 0],
+    ] as const) {
+      expect(occurrences(markupFor(cardCount), backClass)).toBe(backs);
+    }
+
+    // The cap is on the picture, never on the number: the count beside the name
+    // is what says how many cards an opponent is actually holding.
+    expect(markupFor(13)).toContain('13 cards');
+    expect(markupFor(1)).toContain('1 card<');
   });
 
   it('renders the setup screen with the difficulty choices', () => {

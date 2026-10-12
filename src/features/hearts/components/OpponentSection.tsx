@@ -3,7 +3,14 @@ import { CardBackView } from './CardBackView';
 import { SEAT_AREA } from './seats';
 import { CardFan, Seat, SeatHeader, SeatMeta, SeatName } from '../styled';
 
-/** How many card backs to actually draw before collapsing into a count. */
+/**
+ * How many backs to draw before the fan stops being readable as a fan.
+ *
+ * Every card in a deep hand cannot be drawn on a phone: thirteen backs inside
+ * a seat's ~107px share only ~4px of card each, which renders as a hatched
+ * block rather than a hand of cards (it was tried). The count next to the seat
+ * name is what states the hand honestly; this is the picture of it.
+ */
 const MAX_VISIBLE_BACKS = 5;
 
 interface OpponentSectionProps {
@@ -32,13 +39,19 @@ export function OpponentSection({
     <Seat $area={SEAT_AREA[player.id]}>
       <SeatHeader $active={isTurn} $winner={isWinner}>
         <SeatName>{player.name}</SeatName>
+        {/* The count, and not the difficulty: every opponent plays at the
+            difficulty the player chose in setup, so printing it on all three
+            seats said the same thing three times and ate the room the name
+            needed on a phone. */}
         <SeatMeta>
-          {player.difficulty} · {cardCount} {cardCount === 1 ? 'card' : 'cards'}
+          {cardCount} {cardCount === 1 ? 'card' : 'cards'}
         </SeatMeta>
       </SeatHeader>
 
-      {cardCount > 0 ? (
-        <CardFan aria-hidden="true">
+      {/* The fan closes up to fit the seat rather than hanging off the edge of
+          the screen, which is how the fifth back used to be cut off. */}
+      {visibleBacks > 0 ? (
+        <CardFan $count={visibleBacks} aria-hidden="true">
           {Array.from({ length: visibleBacks }, (_, index) => (
             <CardBackView key={index} />
           ))}

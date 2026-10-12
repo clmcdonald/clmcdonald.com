@@ -5,6 +5,12 @@ export const THEME = {
   felt: '#0d5c2e',
   feltLight: '#146b37',
   feltDark: '#073c1c',
+  /**
+   * `felt` at zero alpha. The table's vignette fades in from a band of flat
+   * felt, and this is the other end of that fade. Spelled out rather than
+   * written as `transparent` so the fade can only ever be felt-coloured.
+   */
+  feltFade: 'rgba(13, 92, 46, 0)',
   cardWhite: '#fdfdfd',
   red: '#c0392b',
   black: '#1f1f1f',
@@ -22,7 +28,6 @@ export const Container = styled.div`
   --card-w: 64px;
   --card-h: calc(var(--card-w) * 1.4);
   --card-border: 1px;
-  --overlap: -0.42;
 
   min-height: 100dvh;
   display: flex;
@@ -35,22 +40,34 @@ export const Container = styled.div`
     'Segoe UI',
     Roboto,
     sans-serif;
-  background: radial-gradient(
-    circle at 50% 38%,
-    ${THEME.feltLight} 0%,
-    ${THEME.felt} 48%,
-    ${THEME.feltDark} 100%
-  );
+  /* The felt is a lamp over the table: warm near the middle, falling away to
+     the rails — but the very top of the page is flat felt, on purpose.
+
+     In an installed PWA the status bar is painted over the top of this
+     element (the page is viewport-fit=cover, and the theme colour is the same
+     green), so whatever colour the felt is at its top edge has to match the
+     strip exactly. A vignette that is already partway to feltDark at zero
+     height leaves a visible seam across the top of the screen; the flat band
+     below is what stops that. */
+  background-color: ${THEME.felt};
+  background-image:
+    linear-gradient(180deg, ${THEME.felt} 0, ${THEME.feltFade} 18%),
+    radial-gradient(
+      circle at 50% 42%,
+      ${THEME.feltLight} 0%,
+      ${THEME.felt} 48%,
+      ${THEME.feltDark} 100%
+    );
   overflow-x: hidden;
   padding: env(safe-area-inset-top) env(safe-area-inset-right)
     env(safe-area-inset-bottom) env(safe-area-inset-left);
 
+  /* Phones used to shrink the cards hard (38px) so that a full hand could fit
+     the narrow strip the hand was given. The hand is now as wide as the table,
+     so the cards can sit close to their desktop size; how tightly they fan is
+     worked out from the row itself, so thirteen cards fit at any width. */
   @media (max-width: 720px) {
-    --card-w: 46px;
-  }
-  @media (max-width: 400px) {
-    --card-w: 38px;
-    --overlap: -0.52;
+    --card-w: 52px;
   }
 `;
 
@@ -159,6 +176,26 @@ export const TableArea = styled.section`
   align-items: center;
   gap: 8px;
   min-height: 0;
+
+  /* A phone cannot afford the two side columns the desktop table has. At 390px
+     they come out around 100px wide — narrower than a seat's own name and card
+     count, so the seat headers were squeezed to nothing and their fans ran off
+     the edge of the screen; and the hand, which shared the middle column, had
+     room for six of its thirteen cards and scrolled for the rest.
+
+     So on a narrow screen the table turns: the three opponents share the top
+     row, left to right in the same order they sit around the real table (west,
+     north, east, so a trick still flies out toward the seat it names), and the
+     centre and the hand each get the full width. Only the areas change — the
+     seat elements keep their own grid-area names. */
+  @media (max-width: 900px) {
+    grid-template-areas:
+      'west north east'
+      'center center center'
+      'south south south';
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
 `;
 
 /** Where a seat sits around the table, and which way a trick flies to it. */
@@ -181,6 +218,15 @@ export const SeatHeader = styled.div<{
   display: flex;
   align-items: center;
   gap: 6px;
+  /* Wrap rather than squeeze. A seat header is a name plus a card count (plus
+     the hand's row of score and prompt), and when the pill is narrower than
+     all of that the flex line used to take the difference out of whichever
+     item could shrink the most — the name, whose overflow:hidden gives it a
+     minimum size of zero. That is how "You" was rendered as "Y…". Wrapping
+     keeps every item at the width it actually needs and moves what does not
+     fit onto a second line. */
+  flex-wrap: wrap;
+  justify-content: center;
   padding: 4px 10px;
   border-radius: 999px;
   background: ${(props) =>
@@ -235,13 +281,40 @@ export const SeatMeta = styled.span`
   font-size: 0.72rem;
 `;
 
-export const CardFan = styled.div`
+/**
+ * An opponent's hand, face down.
+ *
+ * The backs close up to whatever room the seat has, so the fan always fits —
+ * it used to lap by a fixed fraction of a card, which on a phone pushed the
+ * last back off the edge of the screen. How many backs are drawn is the
+ * caller's business (see MAX_VISIBLE_BACKS).
+ *
+ * `$count` is what the lap is divided by; it is a prop because the divisor goes
+ * into the CSS itself, and making it a variable would need a division the
+ * parser will not do.
+ */
+export const CardFan = styled.div<{ $count: number }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  /* The full width of the seat. The lap below takes a percentage, which
+     resolves against this box, so giving it a definite width is what keeps the
+     sum of the cards inside the seat's column rather than spilling out of it. */
+  width: 100%;
 
   > * + * {
-    margin-left: calc(var(--card-w) * var(--overlap));
+    /* The lap wants to be 58% of a card, and settles for less if the seat
+       cannot lend it that much — the minimum of the two is exactly the lap that
+       leaves the fan as wide as its box and no wider. */
+    margin-left: calc(
+      min(
+          calc(var(--card-w) * 0.58),
+          calc(
+            (100% - var(--card-w)) / ${(props) => Math.max(1, props.$count - 1)}
+          )
+        ) - var(--card-w) -
+        0.5px
+    );
   }
 `;
 
@@ -436,6 +509,22 @@ export const HandArea = styled.div`
   min-width: 0;
 `;
 
+/**
+ * The human's hand: one fanned row of cards, the whole hand on screen.
+ *
+ * The lap between cards is derived from the row's own width instead of being a
+ * fixed fraction of a card. A fixed one cannot fit a whole hand: thirteen cards
+ * at a sixth of their width are half again as wide as a phone's screen, so the
+ * row scrolled and its last cards sat off the edge. Deriving the lap from the
+ * width means thirteen cards always fit, on any screen, with no breakpoint to
+ * keep in step — and the cards stay as spread as the room allows, which keeps
+ * them legible (the rank and suit corner wants roughly the left 40% of a card
+ * showing above the card in front of it).
+ *
+ * The 0.58 cap is the spacing a hand wants when there is room to spare, so the
+ * desktop fan is unchanged; the overflow-x below is a last-resort fallback that
+ * arithmetically should never be reached.
+ */
 export const HandRow = styled.div`
   display: flex;
   align-items: flex-end;
@@ -450,7 +539,15 @@ export const HandRow = styled.div`
   scrollbar-width: thin;
 
   > * + * {
-    margin-left: calc(var(--card-w) * var(--overlap));
+    /* Divided by twelve, not by the number of cards: thirteen is the largest
+       hand in a four-player deal, so a row sized for thirteen fits every hand
+       the game can deal. */
+    margin-left: calc(
+      min(calc(var(--card-w) * 0.58), calc((100% - var(--card-w)) / 12)) - var(
+          --card-w
+        ) -
+        1px
+    );
   }
 `;
 

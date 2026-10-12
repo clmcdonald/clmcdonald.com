@@ -95,9 +95,9 @@ export function Table({
               {humanPoints > 0 ? `+${humanPoints} this hand · ` : ''}
               {state.totals[0]} pts
             </SeatMeta>
-            {isPassing ? (
-              <SeatMeta>choose 3 to pass {state.passDirection}</SeatMeta>
-            ) : null}
+            {/* The pass prompt used to be repeated here. It lives on the
+                PassSelector bar in the middle of the table, button and all,
+                and saying it twice only crowded the name off the pill. */}
           </SeatHeader>
           <PlayerHand
             cards={state.hands[0] ?? []}

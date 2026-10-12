@@ -183,8 +183,24 @@ paint) — a `setTimeout(…, 0)` fires too early to find anything. Read back
 numbers you can assert on instead of eyeballing pixels. When the values at
 several `currentTime`s agree across repeated samples, the pin is real.
 
+- **Reading the pixels.** A screenshot tells you a colour is there; sampling the
+  PNG tells you which one. There is no ImageMagick here, but a PNG is only zlib
+  plus a per-scanline filter, so a ~60-line Node script (`inflateSync` and the
+  five filter modes) will print the RGB at any coordinate. That is how the felt
+  was shown to start at exactly the theme colour, and that the vignette below it
+  is still painted rather than silently dropped. A scratch one lives at
+  `/tmp/hearts-vis/png.mjs` — recreate it if the temp dir is gone.
+- **A throwaway harness has to reproduce the app's reset.** `__root.tsx` sets
+  `body { margin: 0 }`; a harness that renders the real components without it
+  measures everything 8px out, and each seat column loses 16px of width — enough
+  to make a seat header wrap that does not wrap in the app. Check the harness
+  against a screenshot of the app before trusting a difference it reports.
+
 Note that some visual QA still cannot be automated away — say plainly that human
-review is outstanding when it is.
+review is outstanding when it is. A layout that fits the viewport in a headless
+Firefox window is not proof that it fits an iPhone: the status bar and home
+indicator take `env(safe-area-inset-*)` off the top and bottom, and the system
+font is not the one Firefox has.
 
 ## Styling
 
@@ -225,6 +241,38 @@ cover a bordered element needs a negative inset of one border width.
 
 `src/routes/hearts.tsx` sets the page background (felt green `#0d5c2e`) via a
 route-scoped `createGlobalStyle`; `__root.tsx` owns the global reset.
+
+The felt's vignette (**`Container`**) starts on a band of flat `#0d5c2e` and only
+begins darkening below it. That is not decoration: the installed PWA's status
+bar is painted the same green over the top of the page, so a gradient that is
+already partway to `feltDark` at zero height leaves a visible seam across the top
+of the screen. Keep the theme colour the first stop of the first layer.
+
+**Fan spacing is derived from the width of the row, never fixed.** `HandRow` and
+`CardFan` both lap their cards by
+
+```css
+calc(
+    min(calc(var(--card-w) * 0.58), calc((100% - var(--card-w)) / (n - 1))) -
+      var(--card-w) - 1px
+  )
+```
+
+— the spacing a fan wants, or the most the row can lend it, whichever is less, so
+the fan always fits and stays as open as it can (the trailing pixel is slack
+against sub-pixel rounding, which would otherwise leave the row scrolling by a
+hair). A fixed fraction of a card
+cannot do this: thirteen cards at a fixed lap are half again as wide as a phone
+screen, which is what made the hand scroll and the opponents' fifth card hang off
+the edge. `n - 1` is the number of gaps; `CardFan` takes it as a prop, because a
+divisor cannot be a CSS variable. `CardFan` also stops at five backs — thirteen
+slivers inside one seat render as a hatched block rather than a hand of cards —
+so the number beside the seat name, never the fan, is what states the count.
+
+`TableArea` turns the table around below 900px: the three opponents share the top
+row, and the centre and the hand each take the full width. The desktop layout
+gives each side seat ~100px on a 390px screen — narrower than its own name — and
+the middle column, which the hand shares, 163px, or six cards.
 
 ## PWA
 
