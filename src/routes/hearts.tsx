@@ -1,49 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { createGlobalStyle } from 'styled-components';
+import { HeartsApp } from '../features/hearts/components/HeartsApp';
 
 const GlobalHeartsStyle = createGlobalStyle`
   body {
     background-color: #0d5c2e;
   }
 `;
-
-const HeartsPage = () => {
-  return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        backgroundColor: '#0d5c2e',
-        color: '#fff',
-        fontFamily: 'system-ui, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
-      <h1 style={{ fontSize: '2rem', margin: 0 }}>♡ Hearts</h1>
-      <p style={{ opacity: 0.8, marginTop: '8px' }}>
-        The classic card game — coming soon.
-      </p>
-      <div
-        style={{
-          marginTop: '32px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          fontSize: '0.9rem',
-          opacity: 0.5,
-          textAlign: 'center',
-        }}
-      >
-        <span>♠ ♣ ♥ ♦</span>
-        <span>Pass · Play · Shoot the moon</span>
-      </div>
-      <GlobalHeartsStyle />
-    </div>
-  );
-};
 
 export const Route = createFileRoute('/hearts')({
   component: HeartsPage,
@@ -52,6 +15,8 @@ export const Route = createFileRoute('/hearts')({
       { title: 'Hearts' },
       { name: 'description', content: 'The classic card game' },
       { name: 'theme-color', content: '#0d5c2e' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-title', content: 'Hearts' },
     ],
     links: [
       { rel: 'icon', sizes: '32x32', href: '/favicons/hearts/favicon-32.png' },
@@ -64,6 +29,13 @@ export const Route = createFileRoute('/hearts')({
       { rel: 'manifest', href: '/favicons/hearts/site.webmanifest' },
     ],
   }),
-  // TODO: Add loader for game state hydration
-  // loader: () => ...
 });
+
+function HeartsPage() {
+  return (
+    <>
+      <GlobalHeartsStyle />
+      <HeartsApp />
+    </>
+  );
+}

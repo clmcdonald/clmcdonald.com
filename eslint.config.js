@@ -35,5 +35,12 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    // The service worker runs in a worker scope, not the window.
+    files: ['public/**/*.js'],
+    languageOptions: {
+      globals: globals.serviceworker,
+    },
+  },
   eslintConfigPrettier,
 ]);
