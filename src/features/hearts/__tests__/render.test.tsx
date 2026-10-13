@@ -17,6 +17,7 @@ import { HistoryPanel } from '../components/HistoryPanel';
 import { Scoreboard } from '../components/Scoreboard';
 import { SetupScreen } from '../components/SetupScreen';
 import type { ScoreHistoryEntry } from '../state/storage';
+import { CenterArea, NoticeArea } from '../styled';
 import type { Card } from '../domain/types';
 
 /**
@@ -265,6 +266,35 @@ describe('render smoke tests', () => {
     // is what says how many cards an opponent is actually holding.
     expect(markupFor(13)).toContain('13 cards');
     expect(markupFor(1)).toContain('1 card<');
+  });
+
+  it('gives the table’s children their own row, not the trick’s column', () => {
+    const noticeClass = classAttributeOf(renderToStaticMarkup(<NoticeArea />));
+    const centreClass = classAttributeOf(renderToStaticMarkup(<CenterArea />));
+    expect(noticeClass).not.toBe('');
+    expect(noticeClass).not.toBe(centreClass);
+
+    const markup = renderToStaticMarkup(
+      <Table
+        state={createDemoState()}
+        legalPlays={null}
+        passSelection={[]}
+        receivedCards={[]}
+        scoreboardOpen={false}
+      >
+        <p>Pass 3 cards</p>
+      </Table>
+    );
+
+    // The centre column is only as wide as the trick cross on a phone, and the
+    // pass bar needs nearly the whole screen, so it gets a grid row of its own.
+    // That the row is full width is a CSS property and is checked in a browser;
+    // what this pins is that the child is inside the notice element — putting
+    // it back inside the centre silently crushes the bar on a phone.
+    expect(occurrences(markup, '<p>Pass 3 cards</p>')).toBe(1);
+    expect(markup).toMatch(
+      new RegExp(`class="${noticeClass}"[^>]*><p>Pass 3 cards</p>`)
+    );
   });
 
   it('renders the setup screen with the difficulty choices', () => {

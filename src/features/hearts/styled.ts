@@ -28,6 +28,12 @@ export const Container = styled.div`
   --card-w: 64px;
   --card-h: calc(var(--card-w) * 1.4);
   --card-border: 1px;
+  /* The trick is a cross of three card columns with a gap between them, and on
+     a narrow screen the seat row is sized around it: the table's middle column
+     is exactly this wide, so the cross always has room and the seats take what
+     is left. One source of truth, used by both. */
+  --trick-gap: 6px;
+  --cross-w: calc(var(--card-w) * 3 + var(--trick-gap) * 2);
 
   min-height: 100dvh;
   display: flex;
@@ -170,31 +176,39 @@ export const TableArea = styled.section`
   grid-template-areas:
     '. north .'
     'west center east'
+    '. notices .'
     '. south .';
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 8px;
+  /* Named because the narrow-screen seat width is derived from it; see the
+     Seat component below. */
+  --table-gap: 8px;
+  gap: var(--table-gap);
   min-height: 0;
 
-  /* A phone cannot afford the two side columns the desktop table has. At 390px
-     they come out around 100px wide — narrower than a seat's own name and card
+  /* A phone cannot afford the two side columns the desktop table has — at 390px
+     they come out around 100px wide, narrower than a seat's own name and card
      count, so the seat headers were squeezed to nothing and their fans ran off
-     the edge of the screen; and the hand, which shared the middle column, had
-     room for six of its thirteen cards and scrolled for the rest.
+     the edge of the screen.
 
-     So on a narrow screen the table turns: the three opponents share the top
-     row, left to right in the same order they sit around the real table (west,
-     north, east, so a trick still flies out toward the seat it names), and the
-     centre and the hand each get the full width. Only the areas change — the
-     seat elements keep their own grid-area names. */
+     So on a narrow screen the seats keep their places around the table but the
+     middle column narrows to exactly the width of the trick cross and the two
+     side seats take what is left (about 91px each at 390px, which the derived
+     fan lap and the wrapping seat header are built to absorb). The hand gets a
+     full-width row of its own, which was the real reason it used to scroll.
+
+     The centre column was 1.6fr — wide enough for the pass bar as well as the
+     cross. The pass bar needs nearly the whole screen, so it moves out to a row
+     of its own rather than squeezing into a cross-width column. */
   @media (max-width: 900px) {
     grid-template-areas:
-      'west north east'
-      'center center center'
+      'north north north'
+      'west center east'
+      'notices notices notices'
       'south south south';
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) var(--cross-w) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
   }
 `;
 
@@ -208,6 +222,23 @@ export const Seat = styled.div<{ $area: SeatArea }>`
   align-items: center;
   gap: 6px;
   min-width: 0;
+
+  /* On a narrow screen the middle column is only as wide as the trick cross, so
+     the seat across the table sits in a cell twice as wide as the two beside it
+     and draws a visibly wider fan — one opponent's hand looking twice the size
+     of the others' reads as a rendering fault. It spans the whole top row
+     instead and is held to exactly what its neighbours get: half of what is
+     left once the cross and the two gaps are taken out. (A spanning item's
+     containing block is the sum of its columns *and* the gaps between them, so
+     this percentage comes out at the side column's width at any viewport.) */
+  @media (max-width: 900px) {
+    ${(props) =>
+      props.$area === 'north' &&
+      css`
+        justify-self: center;
+        width: calc((100% - var(--cross-w) - var(--table-gap) * 2) / 2);
+      `}
+  }
 `;
 
 export const SeatHeader = styled.div<{
@@ -328,6 +359,26 @@ export const CenterArea = styled.div`
   min-height: 0;
 `;
 
+/**
+ * The pass bar and the "thinking…" notice.
+ *
+ * Its own row rather than a child of `CenterArea`, because on a narrow screen
+ * the centre column is only as wide as the trick cross (~168px at a phone's
+ * card size) and the pass bar needs nearly the whole screen to stay on one
+ * line. It sits between the table and the hand — next to the cards being
+ * chosen, which is where it belongs.
+ */
+export const NoticeArea = styled.div`
+  grid-area: notices;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+`;
+
 export const TrickGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, auto);
@@ -335,7 +386,7 @@ export const TrickGrid = styled.div`
     '. north .'
     'west . east'
     '. south .';
-  gap: 6px;
+  gap: var(--trick-gap);
   align-items: center;
   justify-items: center;
 `;

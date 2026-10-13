@@ -269,10 +269,27 @@ divisor cannot be a CSS variable. `CardFan` also stops at five backs — thirtee
 slivers inside one seat render as a hatched block rather than a hand of cards —
 so the number beside the seat name, never the fan, is what states the count.
 
-`TableArea` turns the table around below 900px: the three opponents share the top
-row, and the centre and the hand each take the full width. The desktop layout
-gives each side seat ~100px on a 390px screen — narrower than its own name — and
-the middle column, which the hand shares, 163px, or six cards.
+`TableArea` keeps the compass at every width — west left, north above, east
+right, you at the foot — and only the column widths change. Below 900px the
+middle column narrows to exactly the trick cross (`--cross-w`, three cards plus
+two `--trick-gap`s) and the two side seats take what is left: about 91px each at
+390px, where the seat header wraps to two lines and the derived fan lap closes
+the backs right up. Sharing the middle column was also what left the hand room
+for six of its thirteen cards, so the hand gets a full-width row of its own.
+
+The pass bar cannot live in that column either — it needs nearly the whole
+screen to stay on one line — so it has a row of its own between the table and
+the hand. `Table` renders its children into `NoticeArea` for that; moving them
+back inside `CenterArea` silently crushes the bar on a phone.
+
+North spans the whole top row and is then held to the width its neighbours get:
+`calc((100% - var(--cross-w) - var(--table-gap) * 2) / 2)`. A spanning item
+resolves that `100%` against the sum of its three columns _and_ the gaps between
+them, so the result is the side column's width at any viewport, with no
+viewport units anywhere. Note it has to be `width`, not `max-width`: with
+`justify-self: center` a seat sizes to its own text, so a looser `max-width`
+does not bind at all and north's fan comes out _narrower_ than the other two —
+which is exactly what happened on a tablet.
 
 ## PWA
 

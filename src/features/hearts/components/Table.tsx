@@ -4,6 +4,7 @@ import {
   CenterArea,
   Felt,
   HandArea,
+  NoticeArea,
   SeatHeader,
   SeatMeta,
   SeatName,
@@ -85,8 +86,9 @@ export function Table({
                 : (state.players[trickWinnerId]?.name ?? null)
             }
           />
-          {children}
         </CenterArea>
+
+        {children ? <NoticeArea>{children}</NoticeArea> : null}
 
         <HandArea>
           <SeatHeader $active={isMyTurn} $winner={trickWinnerId === 0}>

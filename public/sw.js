@@ -5,7 +5,7 @@
  * retire older caches on activate.
  */
 
-const CACHE_NAME = 'hearts-shell-v2';
+const CACHE_NAME = 'hearts-shell-v3';
 
 const APP_SHELL = [
   '/',
