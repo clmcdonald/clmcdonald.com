@@ -23,7 +23,7 @@
     ]
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.170.41",
+    "@tanstack/react-router": "^1.170.44",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "styled-components": "^6.5.3"
