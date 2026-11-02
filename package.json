@@ -26,7 +26,7 @@
     "@tanstack/react-router": "^1.170.41",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "styled-components": "^6.5.3"
+    "styled-components": "^6.6.0"
   },
   "devDependencies": {
     "@babel/core": "^8.0.7",
